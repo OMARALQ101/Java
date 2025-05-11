@@ -3,15 +3,24 @@ package org;
 import java.time.Year;
 import java.time.YearMonth;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Date
 {
     
     private int year;
     private int month;
     private int day;
-
-    public Date(int year, int month, int day) throws IllegalArgumentException
+        
+    @JsonCreator
+    public Date(
+        @JsonProperty("year") int year,
+        @JsonProperty("month") int month,
+        @JsonProperty("day") int day
+    ) throws IllegalArgumentException
     {
+
         if(year > Year.now().getValue())
         {
             throw new IllegalArgumentException("Year cannot be greater than " + Year.now().getValue());
@@ -30,7 +39,7 @@ public class Date
         this.year = year;
         this.month = month;
         this.day = day;
-    }   
+    }
     
     public int getYear()
     {

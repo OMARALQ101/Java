@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "value": 23.75,
+    "year": 2025,
+    "month": 5,
+    "day": 8,
+    "category": "FOOD"
+  },
+  {
+    "id": 2,
+    "value": 1200.00,
+
+      "year": 2025,
+      "month": 5,
+      "day": 1,
+    "category": "HOUSING"
+  },
+  {
+    "id": 3,
+    "value": 65.30,
+      "year": 2025,
+      "month": 4,
+      "day": 28,
+    "category": "TRANSPORTATION"
+  }
+]
