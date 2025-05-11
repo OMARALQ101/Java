@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 public class Expense
 {
-    enum CATEGORY{
+    public enum CATEGORY{
         HOUSING,
         UTILITIES,
         TRANSPORTATION,
@@ -21,20 +21,21 @@ public class Expense
     
     private static int nextId = 1;
     @JsonProperty("value")
-    private float value;
+    private double value;
     @JsonProperty("id")
     private int id;
     private Date date;
     private CATEGORY category;
 
-    public Expense(float value, int year, int month, int day, CATEGORY category) throws IllegalArgumentException
+    public Expense(double value, int year, int month, int day, CATEGORY category) throws IllegalArgumentException
     {
         if(value <= 0)
         {
             throw new IllegalArgumentException("Value cannot be less than or equal zero");
         }
 
-        this.value = (Math.round(value*100))/100;
+        double rounded = (Math.round(value * 100.0))/100.0;
+        this.value = rounded;
         this.id = nextId++;
         this.date = new Date(year, month, day);
         this.category = category;
@@ -43,10 +44,8 @@ public class Expense
 
     @JsonCreator
     public Expense(@JsonProperty("id") int id, 
-    @JsonProperty("value") float value, 
-    @JsonProperty("year") int year,
-    @JsonProperty("month") int month,
-    @JsonProperty("day") int day,
+    @JsonProperty("value") double value, 
+    @JsonProperty("year") Date date,
     @JsonProperty("category") CATEGORY category) throws IllegalArgumentException
     {
         if(value <= 0)
@@ -54,14 +53,20 @@ public class Expense
             throw new IllegalArgumentException("Value cannot be less than or equal zero");
         }
 
-        this.value = (Math.round(value*100))/100;
+        double rounded = (Math.round(value * 100.0))/100.0;
+        this.value = rounded;
         this.id = id;
-        this.date = new Date(year, month, day);
+        this.date = date;
         this.category = category;
+
+        if (id >= nextId)
+        {
+            nextId = id+1;
+        }
 
     }
 
-    public float getValue()
+    public double getValue()
     {
         return value;
     }
@@ -82,7 +87,7 @@ public class Expense
     }
 
 
-    public void setValue(float value)
+    public void setValue(double value)
     {
         this.value = (Math.round(value*100))/100;
     }
