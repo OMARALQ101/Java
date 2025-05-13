@@ -2,32 +2,20 @@ package org;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"value","year","month","day","category"})
 
 public class Expense
 {
-    public enum CATEGORY{
-        HOUSING,
-        UTILITIES,
-        TRANSPORTATION,
-        FOOD,
-        HEALTHCARE,
-        DEBT_PAYMENT,
-        SAVINGS_AND_INVESTMENTS,
-        PERSONAL_SPENDING
-    }
+
     
     private static int nextId = 1;
-    @JsonProperty("value")
     private double value;
-    @JsonProperty("id")
+    private String desc;
     private int id;
     private Date date;
-    private CATEGORY category;
+    private String category;
 
-    public Expense(double value, int year, int month, int day, CATEGORY category) throws IllegalArgumentException
+    public Expense(double value, String desc,int year, int month, int day, String category) throws IllegalArgumentException
     {
         if(value <= 0)
         {
@@ -36,6 +24,7 @@ public class Expense
 
         double rounded = (Math.round(value * 100.0))/100.0;
         this.value = rounded;
+        this.desc = desc;
         this.id = nextId++;
         this.date = new Date(year, month, day);
         this.category = category;
@@ -44,9 +33,10 @@ public class Expense
 
     @JsonCreator
     public Expense(@JsonProperty("id") int id, 
-    @JsonProperty("value") double value, 
+    @JsonProperty("value") double value,
+    @JsonProperty("desc") String desc, 
     @JsonProperty("year") Date date,
-    @JsonProperty("category") CATEGORY category) throws IllegalArgumentException
+    @JsonProperty("category") String category) throws IllegalArgumentException
     {
         if(value <= 0)
         {
@@ -55,6 +45,7 @@ public class Expense
 
         double rounded = (Math.round(value * 100.0))/100.0;
         this.value = rounded;
+        this.desc = desc;
         this.id = id;
         this.date = date;
         this.category = category;
@@ -81,11 +72,20 @@ public class Expense
         return date;
     }
 
-    public CATEGORY getCategory()
+    public String getCategory()
     {
         return category;
     }
 
+    public String getDescription()
+    {
+        return desc;
+    }
+
+    public void setDescription(String desc)
+    {
+        this.desc = desc;
+    }
 
     public void setValue(double value)
     {
@@ -97,7 +97,7 @@ public class Expense
         this.date = date;
     }
 
-    public void setCategory(CATEGORY category)
+    public void setCategory(String category)
     {
         this.category = category;
     }
@@ -105,7 +105,7 @@ public class Expense
     @Override
     public String toString()
     {
-        return ""+id+". value = "+value+", date = "+date.toString()+", category = "+ category.toString();
+        return ""+id+". value = "+value+ ", desc = "+ desc +", date = "+date.toString()+", category = "+ category;
     }
 
 }

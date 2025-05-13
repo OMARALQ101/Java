@@ -23,6 +23,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.5")
+    implementation("commons-cli:commons-cli:1.9.0")
 
     // This dependency is used by the application.
     implementation(libs.guava)

@@ -6,23 +6,33 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import org.Expense;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
 public class App {
 
     public static ArrayList<Expense> expenses;
+    //Just some spaces
+    public static String space = "                                                     ";
 
     // this is going to be printed whenever there isnt enough arguments or misuse of application
-    public static String improper_use = "To use the Expense Tracker Application you have the following options:\n"+
-                    "java -jar app/build/libs/app-all.jar open [filename] [command]\n "
-                    + "Here are the availabe commands:\n" + 
-                    "1. add\n2. list\n3. filter\n4. update\n5. delete\n6. summary"
+    public static String improper_use = """
+                                        To use the Expense Tracker Application you have the following options:
+                                        java -jar app/build/libs/app-all.jar open [filename] [command]
+                                         """
+                    + space + "1. add -value [value] -desc [description] -date [YYYY-MM-DD] -category [category]\n" 
+                     + space + "2. list -sort_asc [amount or date] || -sort_desc [amount or date]\n"
+                     + space + "3. filter -category [category] -from [YYYY-MM-DD] -to [YYYY-MM-DD] -min [value] -max[value]\n"
+                     + space + "4. update -id [id] -value [value] -desc [description]\n"
+                     + space + "5. delete -id [id]\n" 
+                    + space + "6. summary -month [YYYY-MM-DD]\n"
                 ;
 
 
@@ -102,7 +112,7 @@ public class App {
             switch(args[2])
             {
                 case "add":
-                    addExpense();
+                    addExpense(args);
                     break;
                 case "list":
                     break;
@@ -121,26 +131,45 @@ public class App {
     }
 
     //add a new expense
-    public static void addExpense()
+    public static void addExpense(String[] args)
     {
-        Scanner in = new Scanner(System.in);
-        System.out.println("Please enter the data for the expense in this format: [Value] [Year|YYYY] [Month|MM] [Day|DD] [Category]");
-        System.out.println("Make sure to only enter one of the following categories:\nHOUSING, UTILITIES, TRANSPORTATION, FOOD, HEALTHCARE, DEBT_PAYMENT, SAVINGS_AND_INVESTMENTS, PERSONAL_SPENDING");
-        double value = in.nextDouble();
-        int year = in.nextInt();
-        int month = in.nextInt();
-        int day = in.nextInt();
-        String str = in.nextLine().trim();
+        
+        Options options = new Options();
 
-        try{
-            Expense.CATEGORY category = Expense.CATEGORY.valueOf(str);
-            Expense expense = new Expense(value, year, month, day, category);
-            expenses.add(expense);
-        } catch(IllegalArgumentException e)
+        options.addOption("value", true, "amount used for the expense");
+        options.addOption("desc", true, "description for the expense");
+        options.addOption("date", true, "date for the expense in YYYY-MM-DD format");
+        options.addOption("category", true, "category for the expense");
+
+        try
         {
-            System.out.println("Invalid category: " + e.getMessage());
-            System.exit(1);
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            if (!cmd.hasOption("value") || !cmd.hasOption("desc") || !cmd.hasOption("date") || !cmd.hasOption("category"))
+            {
+                throw new IllegalArgumentException("Please, when adding an expense, include the 4 options: -value -desc -date -category");
+            }
+
+            double value = Double.parseDouble(cmd.getOptionValue("value"));
+            String desc = cmd.getOptionValue("desc");
+            String[] date = cmd.getOptionValue("date").split("-");
+            int year = Integer.parseInt(date[0]);
+            int month = Integer.parseInt(date[1]);
+            int day = Integer.parseInt(date[2]);            
+            String category = cmd.getOptionValue("category");
+
+            Expense exp = new Expense(value, desc, year, month, day, category);
+            System.out.println("Added the expense: " + exp.toString());
+            expenses.add(exp);
         }
+        catch(Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+
+        
 
     }
 
@@ -175,6 +204,7 @@ public class App {
                 case "open":
                     loadJson(args);
                     runOptions(args);
+                    saveJson(args);
                     break;
                 default:                
                   System.out.println(improper_use);
@@ -182,7 +212,7 @@ public class App {
             }
         }
 
-        saveJson(args);
+        
 
     }
 }
