@@ -102,6 +102,66 @@ public class Expense
         this.category = category;
     }
 
+    public int compareDate(Expense b)
+    {
+        if(this.date.getYear() > b.date.getYear())
+        {
+            return 1;
+        }
+        else if (this.date.getYear() == b.date.getYear())
+        {
+            if(this.date.getMonth() > b.date.getMonth())
+            {
+                return 1;
+            }
+            else if (this.date.getMonth() == b.date.getMonth())
+            {
+                if(this.date.getDay() > b.date.getDay())
+                {
+                    return 1;
+                }
+                else if (this.date.getDay() == b.date.getDay())
+                {
+                    return 0;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            else
+            {
+                return -1;
+            }
+
+        }
+        else
+        {
+            return -1;
+        }
+        
+
+    }
+
+    public int compareAmount(Expense b)
+    {
+        if(this.value > b.value)
+        {
+            return 1;
+        }
+        else if (this.value == b.value)
+        {
+            return 0;
+
+        }
+        else
+        {
+            return -1;
+        }
+        
+
+    }
+
     @Override
     public String toString()
     {

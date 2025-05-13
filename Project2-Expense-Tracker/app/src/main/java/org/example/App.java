@@ -115,6 +115,7 @@ public class App {
                     addExpense(args);
                     break;
                 case "list":
+                    listExpense(args);
                     break;
                 case "filter":
                     break;
@@ -127,6 +128,90 @@ public class App {
                 default:
                     System.err.println("That option doesnt exist");  
             }
+        }
+    }
+
+    //list expenses by sorting them by either amount or date in ascending or descending order
+    public static void listExpense(String[] args)
+    {
+        Options options = new Options();
+
+        options.addOption("sort_asc", true, "to sort an amount or date in ascending order");
+        options.addOption("sort_desc", true, "to sort an amount or date in descending order");
+
+        try
+        {
+            ArrayList<Expense> expenseList = expenses; 
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            if (!cmd.hasOption("sort_asc") && !cmd.hasOption("sort_desc"))
+            //default option is to sort date in ascending order
+            {
+                expenseList.sort((a, b) -> { return a.compareDate(b); });
+                for(var x : expenseList)
+                {
+                    System.out.println(x.toString());
+                }
+            }
+            else if (cmd.hasOption("sort_asc") && cmd.hasOption("sort_desc"))
+            {
+                throw new IllegalArgumentException("Please, when listing expenses, you can not sort them by ascending and descending order at the same time");
+            }
+            else if (cmd.hasOption("sort_asc"))
+            {
+                String sortBy = cmd.getOptionValue("sort_asc");
+                if (!sortBy.toLowerCase().trim().equals("date") && !sortBy.toLowerCase().trim().equals("amount"))
+                {
+                    throw new IllegalArgumentException("Please, when listing expenses, you can only sort by the amount or by the date");
+                }
+                else if (sortBy.toLowerCase().equals("date"))
+                {
+                    expenseList.sort((a, b) -> { return a.compareDate(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+                else
+                {
+                    expenseList.sort((a, b) -> { return a.compareAmount(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+            }
+            else
+            {
+                String sortBy = cmd.getOptionValue("sort_desc");
+                if (!sortBy.toLowerCase().trim().equals("date") && !sortBy.toLowerCase().trim().equals("amount"))
+                {
+                    throw new IllegalArgumentException("Please, when listing expenses, you can only sort by the amount or by the date");
+                }
+                else if (sortBy.toLowerCase().equals("date"))
+                {
+                    expenseList.sort((a, b) -> { return -1* a.compareDate(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+                else
+                {
+                    expenseList.sort((a, b) -> { return -1* a.compareAmount(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+            }
+
+        }
+        catch(Exception e)
+        {
+            System.out.println(e.getMessage());
         }
     }
 
