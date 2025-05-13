@@ -89,7 +89,8 @@ public class Expense
 
     public void setValue(double value)
     {
-        this.value = (Math.round(value*100))/100;
+        double rounded = (Math.round(value * 100.0))/100.0;
+        this.value = rounded;
     }
 
     public void setDate(Date date)
@@ -102,25 +103,25 @@ public class Expense
         this.category = category;
     }
 
-    public int compareDate(Expense b)
+    public int compareDate(Date b)
     {
-        if(this.date.getYear() > b.date.getYear())
+        if(this.date.getYear() > b.getYear())
         {
             return 1;
         }
-        else if (this.date.getYear() == b.date.getYear())
+        else if (this.date.getYear() == b.getYear())
         {
-            if(this.date.getMonth() > b.date.getMonth())
+            if(this.date.getMonth() > b.getMonth())
             {
                 return 1;
             }
-            else if (this.date.getMonth() == b.date.getMonth())
+            else if (this.date.getMonth() == b.getMonth())
             {
-                if(this.date.getDay() > b.date.getDay())
+                if(this.date.getDay() > b.getDay())
                 {
                     return 1;
                 }
-                else if (this.date.getDay() == b.date.getDay())
+                else if (this.date.getDay() == b.getDay())
                 {
                     return 0;
                 }
@@ -143,13 +144,18 @@ public class Expense
 
     }
 
-    public int compareAmount(Expense b)
+    public int compareDate(Expense b)
     {
-        if(this.value > b.value)
+        return compareDate(b.getDate());
+    }
+
+    public int compareAmount(double b)
+    {
+        if(this.value > b)
         {
             return 1;
         }
-        else if (this.value == b.value)
+        else if (this.value == b)
         {
             return 0;
 
@@ -160,6 +166,11 @@ public class Expense
         }
         
 
+    }
+
+    public int compareAmount(Expense b)
+    {
+        return compareAmount(b.getValue());
     }
 
     @Override

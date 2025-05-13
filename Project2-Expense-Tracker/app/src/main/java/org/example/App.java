@@ -6,6 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+import org.Date;
 
 import org.Expense;
 import org.apache.commons.cli.CommandLine;
@@ -68,7 +72,8 @@ public class App {
             }
             catch(Exception e)
             {
-                System.out.println(e.getMessage());
+                System.out.println("ERROR: " + e.getMessage());
+                e.printStackTrace();
                 System.exit(1);
             }
 
@@ -87,13 +92,15 @@ public class App {
             }
             catch(IOException e2)
             {
-                System.out.println(""+e2.getMessage());
+                System.out.println("ERROR: " + e.getMessage());
+                e.printStackTrace();
                 System.exit(2);
             }
         }
         catch(IOException e)
         {
-            System.out.println(""+e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
             System.exit(2);
         }
 
@@ -118,16 +125,225 @@ public class App {
                     listExpense(args);
                     break;
                 case "filter":
+                    filterExpense(args);
                     break;
                 case "update":
+                    updateExpense(args);
                     break;          
                 case "delete":
                     break;
                 case "summary":
                     break; 
                 default:
-                    System.err.println("That option doesnt exist");  
+                    System.err.println("That option doesnt exist");
+                    System.out.println(improper_use);  
             }
+        }
+    }
+
+    //update an expense
+    public static void updateExpense(String[] args)
+    {
+        Options options = new Options();
+
+        options.addOption("id", true, "id for the expense you want to change");
+        options.addOption("value", true, "amount used for the expense");
+        options.addOption("desc", true, "description for the expense");
+        options.addOption("date", true, "date for the expense in YYYY-MM-DD format");
+        options.addOption("category", true, "category for the expense");
+
+        try
+        {
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            if (!cmd.hasOption("id"))
+            {
+                throw new IllegalArgumentException("Please, when adding an expense, include the id of the expense you would like to change");
+            }
+
+            if (!cmd.hasOption("value") && !cmd.hasOption("desc") && !cmd.hasOption("date") && !cmd.hasOption("category"))
+            {
+                throw new IllegalArgumentException("Please, when updating an expense, include one of the 4 options: -value -desc -date -category");
+            }
+
+            int id = Integer.parseInt(cmd.getOptionValue("id"));
+            boolean idExist = false;
+
+            for (Expense x : expenses)
+            {
+                if(x.getId() == id)
+                {
+                    Expense expenseUpdate = x;
+                    idExist = true;
+
+                    if(cmd.hasOption("value"))
+                    {
+                        double value = Double.parseDouble(cmd.getOptionValue("value"));
+                        expenseUpdate.setValue(value);
+                    }
+
+                    if(cmd.hasOption("desc"))
+                    {
+                        String desc = cmd.getOptionValue("desc");
+                        expenseUpdate.setDescription(desc);
+                    }
+
+                    if(cmd.hasOption("date"))
+                    {
+                        String[] date = cmd.getOptionValue("date").split("-");
+                        Date dateUpdate = new Date(Integer.parseInt(date[0]), Integer.parseInt(date[1]), Integer.parseInt(date[2]));   
+                        expenseUpdate.setDate(dateUpdate);
+                    }
+
+                    if(cmd.hasOption("category"))
+                    {
+                        String category = cmd.getOptionValue("category");  
+                        expenseUpdate.setCategory(category);
+                    }
+
+                    System.out.println("Updated the expense: " + expenseUpdate.toString());
+                }
+
+            }
+            
+            if (!idExist)
+            {
+               throw new NoSuchElementException("The expense with id "+ id + " does not exist");
+            }
+
+        }
+        catch(Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    // filter expenses
+    public static void filterExpense(String[] args)
+    {
+        Options options = new Options();
+
+        options.addOption("category", true, "category for the expense");
+        options.addOption("from", true, "starting date for the expense");
+        options.addOption("to", true, "ending date for the expense");
+        options.addOption("min", true, "minimum value for the expense");
+        options.addOption("max", true, "maximum value for the expense");
+
+        try
+        {
+            ArrayList<Expense> expenseFilter = new ArrayList<>();
+            expenseFilter.addAll(expenses);
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            // If the option "category" exists, remove every expense that isnt in the same category as "category"
+            if(cmd.hasOption("category"))
+            {
+                String category = cmd.getOptionValue("category").trim().toLowerCase();
+
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (!iter.next().getCategory().equalsIgnoreCase(category))
+                    {
+                        iter.remove();
+                    }
+                }
+
+            }
+
+            // If the option "from" exists, remove every expense that has a date before "from"
+            if(cmd.hasOption("from"))
+            {
+                String[] from = cmd.getOptionValue("from").toLowerCase().trim().split("-");
+
+                Date from_date = new Date(Integer.parseInt(from[0]), Integer.parseInt(from[1]), Integer.parseInt(from[2]));
+                
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareDate(from_date) < 0)
+                    {
+                        iter.remove();
+                    }
+                }
+
+            }
+
+            // If the option "to" exists, remove every expense that has a date after "to"
+            if(cmd.hasOption("to"))
+            {
+                String[] to = cmd.getOptionValue("to").toLowerCase().trim().split("-");
+
+                Date to_date = new Date(Integer.parseInt(to[0]), Integer.parseInt(to[1]), Integer.parseInt(to[2]));
+                
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareDate(to_date) > 0)
+                    {
+                        iter.remove();
+                    }
+                }
+
+            }
+
+            // If the option "min" exists, remove every expense that is less than "min"
+            if(cmd.hasOption("min"))
+            {
+                Double min = Double.parseDouble(cmd.getOptionValue("min"));
+
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareAmount(min) < 0)
+                    {
+                        iter.remove();
+                    }
+                }
+
+            }
+
+            // If the option "max" exists, remove every expense that is greater than "max"
+            if(cmd.hasOption("max"))
+            {
+                Double max = Double.parseDouble(cmd.getOptionValue("max"));
+
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareAmount(max) > 0)
+                    {
+                        iter.remove();
+                    }
+                }
+
+            }
+
+            //Print whatever is left from expenseFilter
+            if(expenseFilter.isEmpty())
+            {
+                System.out.println("No expense found");
+            }
+            else
+            {
+                for (Expense x : expenseFilter)
+                {
+                    System.out.println(x.toString());
+                }
+            }
+
+        }
+        catch(Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -211,7 +427,9 @@ public class App {
         }
         catch(Exception e)
         {
-            System.out.println(e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -251,11 +469,10 @@ public class App {
         }
         catch(Exception e)
         {
-            System.out.println(e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
         }
-
-        
-
     }
 
     // save json to file
@@ -268,7 +485,8 @@ public class App {
         }
         catch(IOException e)
         {
-            System.out.println(""+e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
             System.exit(2);
         }
     }
