@@ -34,7 +34,7 @@ public class App {
                     + space + "1. add -value [value] -desc [description] -date [YYYY-MM-DD] -category [category]\n" 
                      + space + "2. list -sort_asc [amount or date] || -sort_desc [amount or date]\n"
                      + space + "3. filter -category [category] -from [YYYY-MM-DD] -to [YYYY-MM-DD] -min [value] -max[value]\n"
-                     + space + "4. update -id [id] -value [value] -desc [description]\n"
+                     + space + "4. update -id [id] -value [value] -desc [description] -date [YYYY-MM-DD] -category [category]\n"
                      + space + "5. delete -id [id]\n" 
                     + space + "6. summary -month [YYYY-MM-DD]\n"
                 ;
@@ -131,6 +131,7 @@ public class App {
                     updateExpense(args);
                     break;          
                 case "delete":
+                    deleteExpense(args);
                     break;
                 case "summary":
                     break; 
@@ -138,6 +139,52 @@ public class App {
                     System.err.println("That option doesnt exist");
                     System.out.println(improper_use);  
             }
+        }
+    }
+
+    //delete an expense
+    public static void deleteExpense(String[] args)
+    {
+        Options options = new Options();
+        options.addOption("id", true, "id for the expense you want to delete");
+
+        try
+        {
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            if (!cmd.hasOption("id"))
+            {
+                throw new IllegalArgumentException("Please, when delete an expense, include the id of the expense you would like to delete");
+            }
+
+            int id = Integer.parseInt(cmd.getOptionValue("id"));
+            boolean idExist = false;
+            Iterator<Expense> iter = expenses.iterator();
+
+            while (iter.hasNext())
+            {
+                if(iter.next().getId() == id)
+                {
+                    idExist = true;
+                    System.out.println("deleted the expense with id " + id);
+                    iter.remove();
+                }
+
+            }    
+            
+            if (!idExist)
+            {
+                throw new NoSuchElementException("The expense with id "+ id + " does not exist");
+            }
+
+        }
+        catch(Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -178,18 +225,21 @@ public class App {
                     Expense expenseUpdate = x;
                     idExist = true;
 
+                    // update value if option available
                     if(cmd.hasOption("value"))
                     {
                         double value = Double.parseDouble(cmd.getOptionValue("value"));
                         expenseUpdate.setValue(value);
                     }
 
+                    // update description if option available
                     if(cmd.hasOption("desc"))
                     {
                         String desc = cmd.getOptionValue("desc");
                         expenseUpdate.setDescription(desc);
                     }
 
+                    // update date if option available
                     if(cmd.hasOption("date"))
                     {
                         String[] date = cmd.getOptionValue("date").split("-");
@@ -197,6 +247,7 @@ public class App {
                         expenseUpdate.setDate(dateUpdate);
                     }
 
+                    // update category if option available
                     if(cmd.hasOption("category"))
                     {
                         String category = cmd.getOptionValue("category");  
