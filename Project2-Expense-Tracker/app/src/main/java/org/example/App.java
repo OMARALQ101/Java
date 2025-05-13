@@ -36,7 +36,7 @@ public class App {
                      + space + "3. filter -category [category] -from [YYYY-MM-DD] -to [YYYY-MM-DD] -min [value] -max[value]\n"
                      + space + "4. update -id [id] -value [value] -desc [description] -date [YYYY-MM-DD] -category [category]\n"
                      + space + "5. delete -id [id]\n" 
-                    + space + "6. summary -month [YYYY-MM-DD]\n"
+                    + space + "6. summary -month [YYYY-MM]\n"
                 ;
 
 
@@ -134,12 +134,65 @@ public class App {
                     deleteExpense(args);
                     break;
                 case "summary":
+                    summaryExpense(args);
                     break; 
                 default:
                     System.err.println("That option doesnt exist");
                     System.out.println(improper_use);  
             }
         }
+    }
+
+    //summarize the expenses
+    public static void summaryExpense(String[] args)
+    {
+        Options options = new Options();
+
+        options.addOption("month", true, "month for the expense in YYYY-MM format");
+
+        try
+        {
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            ArrayList<Expense> expenseSummary = new ArrayList<>();
+            expenseSummary.addAll(expenses);
+
+            if(cmd.hasOption("month"))
+            {
+                
+                String[] date = cmd.getOptionValue("month").split("-");
+                int year = Integer.parseInt(date[0]);
+                int month = Integer.parseInt(date[1]);
+
+                Iterator<Expense> iter = expenseSummary.iterator();
+                while (iter.hasNext())
+                {
+                    Expense x = iter.next();
+                    if(!(x.getDate().getYear() == year) || !(x.getDate().getMonth() == month))
+                    {
+                        iter.remove();
+                    }
+
+                }
+            }
+
+            for (var x : expenseSummary)
+            {
+                System.out.println(x);
+            }
+
+
+
+        }
+        catch(Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
+
     }
 
     //delete an expense
@@ -156,7 +209,7 @@ public class App {
 
             if (!cmd.hasOption("id"))
             {
-                throw new IllegalArgumentException("Please, when delete an expense, include the id of the expense you would like to delete");
+                throw new IllegalArgumentException("Please, when deleting an expense, include the id of the expense you would like to delete");
             }
 
             int id = Integer.parseInt(cmd.getOptionValue("id"));
