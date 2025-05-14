@@ -70,22 +70,27 @@ public class App {
         try(BufferedReader br = new BufferedReader(new FileReader(filename)))
         {
             String json_str = readAllLines(br);
-
-            ObjectMapper mapper = new ObjectMapper();
-            try
+            
+            if(!json_str.isEmpty())
             {
-                expenses = mapper.readValue(json_str, new TypeReference<ArrayList<Expense>>(){});
-                if (expenses == null)
+
+                ObjectMapper mapper = new ObjectMapper();
+                try
                 {
-                    expenses = new ArrayList<>();
+                    expenses = mapper.readValue(json_str, new TypeReference<ArrayList<Expense>>(){});
+                    if (expenses == null)
+                    {
+                        expenses = new ArrayList<>();
+                    }
+                }
+                catch(Exception e)
+                {
+                    System.out.println("ERROR: " + e.getMessage());
+                    e.printStackTrace();
+                    System.exit(1);
                 }
             }
-            catch(Exception e)
-            {
-                System.out.println("ERROR: " + e.getMessage());
-                e.printStackTrace();
-                System.exit(1);
-            }
+
 
         }
         catch(FileNotFoundException e)
