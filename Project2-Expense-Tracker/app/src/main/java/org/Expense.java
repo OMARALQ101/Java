@@ -43,6 +43,11 @@ public class Expense
             throw new IllegalArgumentException("Value cannot be less than or equal zero");
         }
 
+        if(category.length() > 20)
+        {
+            throw new IllegalArgumentException("Category cannot be greater than 20 characters");
+        }
+
         double rounded = (Math.round(value * 100.0))/100.0;
         this.value = rounded;
         this.desc = desc;

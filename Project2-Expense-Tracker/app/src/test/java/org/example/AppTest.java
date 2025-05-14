@@ -3,10 +3,173 @@
  */
 package org.example;
 
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+
+import org.Date;
+import org.Expense;
 import org.junit.jupiter.api.Test;
 
 class AppTest {
-    @Test void appHasAGreeting() {
+
+    @Test 
+    void testAdd() {
+
+        String[] args = {"add", "-value", "260.04", "-desc", "caviar something", "-date", "2024-12-12", "-category", "FOOD"};
+        try
+        {
+            App.expenses = new ArrayList<>();
+            App.addExpense(args);
+            assertEquals(260.04, App.expenses.get(0).getValue());
+            assertEquals("caviar something", App.expenses.get(0).getDescription());     
+            assertEquals(2024, App.expenses.get(0).getDate().getYear());
+            assertEquals(12, App.expenses.get(0).getDate().getMonth());
+            assertEquals(12, App.expenses.get(0).getDate().getDay());
+            assertEquals("FOOD", App.expenses.get(0).getCategory());
+            assertEquals(1, App.expenses.get(0).getId());
+        }
+        catch (Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+
+
         
     }
+
+    @Test 
+    void testUpdate() {
+
+        App.expenses = new ArrayList<>();
+        App.expenses.add(new Expense(1, 20.12, "Burger King", new Date(2004, 12, 16), "FOOD"));
+        App.expenses.add(new Expense(2, 45.99, "Gas Station", new Date(2004, 12, 17), "TRANSPORT"));
+        App.expenses.add(new Expense(3, 13.49, "Netflix", new Date(2004, 12, 18), "ENTERTAINMENT"));
+        App.expenses.add(new Expense(4, 89.75, "Electric Bill", new Date(2004, 12, 19), "UTILITIES"));
+        App.expenses.add(new Expense(5, 120.00, "Textbooks", new Date(2004, 12, 20), "EDUCATION"));
+
+        String[] args = {"update", "-id", "3","-value", "260.04", "-desc", "caviar something", "-date", "2024-12-12", "-category", "FOOD"};
+        try
+        {
+            App.updateExpense(args);
+            assertEquals(260.04, App.expenses.get(2).getValue());
+            assertEquals("caviar something", App.expenses.get(2).getDescription());     
+            assertEquals(2024, App.expenses.get(2).getDate().getYear());
+            assertEquals(12, App.expenses.get(2).getDate().getMonth());
+            assertEquals(12, App.expenses.get(2).getDate().getDay());
+            assertEquals("FOOD", App.expenses.get(2).getCategory());
+        }
+        catch (Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+    }
+
+    @Test 
+    void testDelete() {
+
+        App.expenses = new ArrayList<>();
+        App.expenses.add(new Expense(1, 20.12, "Burger King", new Date(2004, 12, 16), "FOOD"));
+        App.expenses.add(new Expense(2, 45.99, "Gas Station", new Date(2004, 12, 17), "TRANSPORT"));
+        App.expenses.add(new Expense(3, 13.49, "Netflix", new Date(2004, 12, 18), "ENTERTAINMENT"));
+        App.expenses.add(new Expense(4, 89.75, "Electric Bill", new Date(2004, 12, 19), "UTILITIES"));
+        App.expenses.add(new Expense(5, 120.00, "Textbooks", new Date(2004, 12, 20), "EDUCATION"));
+
+        String[] args = {"delete", "-id", "3"};
+        try
+        {
+            assertEquals(5, App.expenses.size());
+            App.deleteExpense(args);
+            assertEquals(4, App.expenses.size());
+            assertEquals(1, App.expenses.get(0).getId());
+            assertEquals(2, App.expenses.get(1).getId());
+            assertEquals(4, App.expenses.get(2).getId());
+            assertEquals(5, App.expenses.get(3).getId());
+            
+        }
+        catch (Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+    }
+
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private final PrintStream originalOut = System.out;
+
+    @Test 
+    void testFilter() {
+
+        App.expenses = new ArrayList<>();
+        App.expenses.add(new Expense(1, 20.12, "Burger King", new Date(2004, 12, 16), "FOOD"));
+        App.expenses.add(new Expense(2, 45.99, "Gas Station", new Date(2004, 12, 17), "TRANSPORT"));
+        App.expenses.add(new Expense(3, 13.49, "Netflix", new Date(2004, 12, 18), "ENTERTAINMENT"));
+        App.expenses.add(new Expense(4, 89.75, "Electric Bill", new Date(2004, 12, 19), "UTILITIES"));
+        App.expenses.add(new Expense(5, 120.00, "Textbooks", new Date(2004, 12, 20), "EDUCATION"));
+        App.expenses.add(new Expense(6, 200.12, "Caviar", new Date(2024, 9, 26), "FOOD"));
+
+        String[] args = {"filter","-category", "FOOD"};
+        try
+        {
+            App.updateExpense(args);
+            String output = outContent.toString();
+            assertFalse(output.contains("TRANSPORT"));
+            assertFalse(output.contains("ENTERTAINMENT"));
+            assertFalse(output.contains("UTILITIES"));
+            assertFalse(output.contains("EDUCATION"));
+        }
+        catch (Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.setOut(originalOut);
+        
+    }
+
+    @Test 
+    void testSummary() {
+
+        App.expenses = new ArrayList<>();
+        App.expenses.add(new Expense(1, 20.12, "Burger King", new Date(2004, 12, 16), "FOOD"));
+        App.expenses.add(new Expense(2, 45.99, "Gas Station", new Date(2004, 12, 17), "TRANSPORT"));
+        App.expenses.add(new Expense(3, 13.49, "Netflix", new Date(2004, 12, 18), "ENTERTAINMENT"));
+        App.expenses.add(new Expense(4, 89.75, "Electric Bill", new Date(2004, 12, 19), "UTILITIES"));
+        App.expenses.add(new Expense(5, 120.00, "Textbooks", new Date(2004, 12, 20), "EDUCATION"));
+        App.expenses.add(new Expense(6, 200.12, "Caviar", new Date(2024, 9, 26), "FOOD"));
+
+        String[] args = {"summary","-month", "2024-9"};
+        try
+        {
+            App.updateExpense(args);
+            String output = outContent.toString();
+            assertFalse(output.contains("Burger King"));
+            assertFalse(output.contains("Gas Station"));
+            assertFalse(output.contains("Netflix"));
+            assertFalse(output.contains("Electric Bill"));
+            assertFalse(output.contains("Textbooks"));
+        }
+        catch (Exception e)
+        {
+            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.setOut(originalOut);
+        
+    }
+
+    
+    
+
+    
 }
