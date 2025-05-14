@@ -22,14 +22,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class App {
 
-    public static ArrayList<Expense> expenses;
+    public static ArrayList<Expense> expenses = new ArrayList<>();
     //Just some spaces
-    public static String space = "                                                     ";
+
+    public static String space = "                                            ";
 
     // this is going to be printed whenever there isnt enough arguments or misuse of application
     public static String improper_use = """
                                         To use the Expense Tracker Application you have the following options:
-                                        java -jar app/build/libs/app-all.jar open [filename] [command]
+                                        java -jar ExpenseTracker.jar open [filename] [command]
                                          """
                     + space + "1. add -value [value] -desc [description] -date [YYYY-MM-DD] -category [category]\n" 
                      + space + "2. list -sort_asc [amount or date] || -sort_desc [amount or date]\n"
@@ -60,8 +61,13 @@ public class App {
     // this method is used to open the file and turn all the json info into objects. 
     public static void loadJson(String[] args) 
     {
+        String filename = args[1];
+        if(!filename.endsWith(".json"))
+        {
+            filename += ".json";
+        }
 
-        try(BufferedReader br = new BufferedReader(new FileReader(args[1])))
+        try(BufferedReader br = new BufferedReader(new FileReader(filename)))
         {
             String json_str = readAllLines(br);
 
@@ -69,6 +75,10 @@ public class App {
             try
             {
                 expenses = mapper.readValue(json_str, new TypeReference<ArrayList<Expense>>(){});
+                if (expenses == null)
+                {
+                    expenses = new ArrayList<>();
+                }
             }
             catch(Exception e)
             {
@@ -81,8 +91,8 @@ public class App {
         catch(FileNotFoundException e)
         {
             // if file not found, try to create the file 
-            System.out.println(e+"\n"+"creating new file called " + args[1]);
-            File file = new File(args[1]);
+            System.out.println("creating new file called " + filename);
+            File file = new File(filename);
             try
             {
                 if(file.createNewFile())
@@ -123,6 +133,7 @@ public class App {
                 {
                     case "add":
                         addExpense(args);
+                        saveJson(args);
                         break;
                     case "list":
                         listExpense(args);
@@ -132,9 +143,11 @@ public class App {
                         break;
                     case "update":
                         updateExpense(args);
+                        saveJson(args);
                         break;          
                     case "delete":
                         deleteExpense(args);
+                        saveJson(args);
                         break;
                     case "summary":
                         summaryExpense(args);
@@ -167,31 +180,39 @@ public class App {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        ArrayList<Expense> expenseSummary = new ArrayList<>();
-        expenseSummary.addAll(expenses);
-
-        if(cmd.hasOption("month"))
+        
+        if (expenses == null)
         {
-            
-            String[] date = cmd.getOptionValue("month").split("-");
-            int year = Integer.parseInt(date[0]);
-            int month = Integer.parseInt(date[1]);
-
-            Iterator<Expense> iter = expenseSummary.iterator();
-            while (iter.hasNext())
-            {
-                Expense x = iter.next();
-                if(!(x.getDate().getYear() == year) || !(x.getDate().getMonth() == month))
-                {
-                    iter.remove();
-                }
-
-            }
+            System.out.println("Nothing to show");
         }
-
-        for (var x : expenseSummary)
+        else
         {
-            System.out.println(x);
+            ArrayList<Expense> expenseSummary = new ArrayList<>();
+            expenseSummary.addAll(expenses);
+
+            if(cmd.hasOption("month"))
+            {
+                
+                String[] date = cmd.getOptionValue("month").split("-");
+                int year = Integer.parseInt(date[0]);
+                int month = Integer.parseInt(date[1]);
+    
+                Iterator<Expense> iter = expenseSummary.iterator();
+                while (iter.hasNext())
+                {
+                    Expense x = iter.next();
+                    if(!(x.getDate().getYear() == year) || !(x.getDate().getMonth() == month))
+                    {
+                        iter.remove();
+                    }
+    
+                }
+            }
+    
+            for (var x : expenseSummary)
+            {
+                System.out.println(x);
+            }
         }
 
 
@@ -205,6 +226,11 @@ public class App {
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        if(expenses == null)
+        {
+            throw new IllegalArgumentException("File is empty");
+        }
 
         if (!cmd.hasOption("id"))
         {
@@ -249,6 +275,11 @@ public class App {
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        if(expenses == null)
+        {
+            throw new IllegalArgumentException("File is empty");
+        }
 
         if (!cmd.hasOption("id"))
         {
@@ -323,109 +354,119 @@ public class App {
         options.addOption("min", true, "minimum value for the expense");
         options.addOption("max", true, "maximum value for the expense");
 
-  
-        ArrayList<Expense> expenseFilter = new ArrayList<>();
-        expenseFilter.addAll(expenses);
-
+       
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        // If the option "category" exists, remove every expense that isnt in the same category as "category"
-        if(cmd.hasOption("category"))
+        if (expenses == null)
         {
-            String category = cmd.getOptionValue("category").trim().toLowerCase();
-
-            Iterator<Expense> iter = expenseFilter.iterator();
-            while(iter.hasNext())
-            {
-                if (!iter.next().getCategory().equalsIgnoreCase(category))
-                {
-                    iter.remove();
-                }
-            }
-
-        }
-
-        // If the option "from" exists, remove every expense that has a date before "from"
-        if(cmd.hasOption("from"))
-        {
-            String[] from = cmd.getOptionValue("from").toLowerCase().trim().split("-");
-
-            Date from_date = new Date(Integer.parseInt(from[0]), Integer.parseInt(from[1]), Integer.parseInt(from[2]));
-            
-            Iterator<Expense> iter = expenseFilter.iterator();
-            while(iter.hasNext())
-            {
-                if (iter.next().compareDate(from_date) < 0)
-                {
-                    iter.remove();
-                }
-            }
-
-        }
-
-        // If the option "to" exists, remove every expense that has a date after "to"
-        if(cmd.hasOption("to"))
-        {
-            String[] to = cmd.getOptionValue("to").toLowerCase().trim().split("-");
-
-            Date to_date = new Date(Integer.parseInt(to[0]), Integer.parseInt(to[1]), Integer.parseInt(to[2]));
-            
-            Iterator<Expense> iter = expenseFilter.iterator();
-            while(iter.hasNext())
-            {
-                if (iter.next().compareDate(to_date) > 0)
-                {
-                    iter.remove();
-                }
-            }
-
-        }
-
-        // If the option "min" exists, remove every expense that is less than "min"
-        if(cmd.hasOption("min"))
-        {
-            Double min = Double.parseDouble(cmd.getOptionValue("min"));
-
-            Iterator<Expense> iter = expenseFilter.iterator();
-            while(iter.hasNext())
-            {
-                if (iter.next().compareAmount(min) < 0)
-                {
-                    iter.remove();
-                }
-            }
-
-        }
-
-        // If the option "max" exists, remove every expense that is greater than "max"
-        if(cmd.hasOption("max"))
-        {
-            Double max = Double.parseDouble(cmd.getOptionValue("max"));
-
-            Iterator<Expense> iter = expenseFilter.iterator();
-            while(iter.hasNext())
-            {
-                if (iter.next().compareAmount(max) > 0)
-                {
-                    iter.remove();
-                }
-            }
-
-        }
-
-        //Print whatever is left from expenseFilter
-        if(expenseFilter.isEmpty())
-        {
-            System.out.println("No expense found");
+            System.out.println("Nothing to show");
         }
         else
         {
-            for (Expense x : expenseFilter)
+            ArrayList<Expense> expenseFilter = new ArrayList<>();
+            expenseFilter.addAll(expenses);
+
+            // If the option "category" exists, remove every expense that isnt in the same category as "category"
+            if(cmd.hasOption("category"))
             {
-                System.out.println(x.toString());
+    
+                String category = cmd.getOptionValue("category").trim().toLowerCase();
+    
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (!iter.next().getCategory().equalsIgnoreCase(category))
+                    {
+                        iter.remove();
+                    }
+                }
+    
+            }
+    
+            // If the option "from" exists, remove every expense that has a date before "from"
+            if(cmd.hasOption("from"))
+            {
+                String[] from = cmd.getOptionValue("from").toLowerCase().trim().split("-");
+    
+                Date from_date = new Date(Integer.parseInt(from[0]), Integer.parseInt(from[1]), Integer.parseInt(from[2]));
+                
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareDate(from_date) < 0)
+                    {
+                        iter.remove();
+                    }
+                }
+    
+            }
+    
+            // If the option "to" exists, remove every expense that has a date after "to"
+            if(cmd.hasOption("to"))
+            {
+                String[] to = cmd.getOptionValue("to").toLowerCase().trim().split("-");
+    
+                Date to_date = new Date(Integer.parseInt(to[0]), Integer.parseInt(to[1]), Integer.parseInt(to[2]));
+                
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareDate(to_date) > 0)
+                    {
+                        iter.remove();
+                    }
+                }
+    
+            }
+    
+            // If the option "min" exists, remove every expense that is less than "min"
+            if(cmd.hasOption("min"))
+            {
+                Double min = Double.parseDouble(cmd.getOptionValue("min"));
+    
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareAmount(min) < 0)
+                    {
+                        iter.remove();
+                    }
+                }
+    
+            }
+    
+            // If the option "max" exists, remove every expense that is greater than "max"
+            if(cmd.hasOption("max"))
+            {
+                Double max = Double.parseDouble(cmd.getOptionValue("max"));
+    
+                Iterator<Expense> iter = expenseFilter.iterator();
+                while(iter.hasNext())
+                {
+                    if (iter.next().compareAmount(max) > 0)
+                    {
+                        iter.remove();
+                    }
+                }
+    
+            }
+    
+            //Print whatever is left from expenseFilter
+            if(expenseFilter.isEmpty())
+            {
+                System.out.println("No expense found");
+            }
+            else
+            {
+                for (Expense x : expenseFilter)
+                {
+                    System.out.println(x.toString());
+                }
             }
         }
+        
+        
 
         
     }
@@ -439,32 +480,21 @@ public class App {
         options.addOption("sort_desc", true, "to sort an amount or date in descending order");
 
 
-        ArrayList<Expense> expenseList = expenses; 
-
+        
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+        
+        if (expenses == null)
+        {
+            System.out.println("Nothing to show");
+        }
+        else
+        {
 
-        if (!cmd.hasOption("sort_asc") && !cmd.hasOption("sort_desc"))
-        //default option is to sort date in ascending order
-        {
-            expenseList.sort((a, b) -> { return a.compareDate(b); });
-            for(var x : expenseList)
-            {
-                System.out.println(x.toString());
-            }
-        }
-        else if (cmd.hasOption("sort_asc") && cmd.hasOption("sort_desc"))
-        {
-            throw new IllegalArgumentException("Please, when listing expenses, you can not sort them by ascending and descending order at the same time");
-        }
-        else if (cmd.hasOption("sort_asc"))
-        {
-            String sortBy = cmd.getOptionValue("sort_asc");
-            if (!sortBy.toLowerCase().trim().equals("date") && !sortBy.toLowerCase().trim().equals("amount"))
-            {
-                throw new IllegalArgumentException("Please, when listing expenses, you can only sort by the amount or by the date");
-            }
-            else if (sortBy.toLowerCase().equals("date"))
+            ArrayList<Expense> expenseList = expenses; 
+    
+            if (!cmd.hasOption("sort_asc") && !cmd.hasOption("sort_desc"))
+            //default option is to sort date in ascending order
             {
                 expenseList.sort((a, b) -> { return a.compareDate(b); });
                 for(var x : expenseList)
@@ -472,39 +502,60 @@ public class App {
                     System.out.println(x.toString());
                 }
             }
+            else if (cmd.hasOption("sort_asc") && cmd.hasOption("sort_desc"))
+            {
+                throw new IllegalArgumentException("Please, when listing expenses, you can not sort them by ascending and descending order at the same time");
+            }
+            else if (cmd.hasOption("sort_asc"))
+            {
+                String sortBy = cmd.getOptionValue("sort_asc");
+                if (!sortBy.toLowerCase().trim().equals("date") && !sortBy.toLowerCase().trim().equals("amount"))
+                {
+                    throw new IllegalArgumentException("Please, when listing expenses, you can only sort by the amount or by the date");
+                }
+                else if (sortBy.toLowerCase().equals("date"))
+                {
+                    expenseList.sort((a, b) -> { return a.compareDate(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+                else
+                {
+                    expenseList.sort((a, b) -> { return a.compareAmount(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+            }
             else
             {
-                expenseList.sort((a, b) -> { return a.compareAmount(b); });
-                for(var x : expenseList)
+                String sortBy = cmd.getOptionValue("sort_desc");
+                if (!sortBy.toLowerCase().trim().equals("date") && !sortBy.toLowerCase().trim().equals("amount"))
                 {
-                    System.out.println(x.toString());
+                    throw new IllegalArgumentException("Please, when listing expenses, you can only sort by the amount or by the date");
+                }
+                else if (sortBy.toLowerCase().equals("date"))
+                {
+                    expenseList.sort((a, b) -> { return -1* a.compareDate(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
+                }
+                else
+                {
+                    expenseList.sort((a, b) -> { return -1* a.compareAmount(b); });
+                    for(var x : expenseList)
+                    {
+                        System.out.println(x.toString());
+                    }
                 }
             }
         }
-        else
-        {
-            String sortBy = cmd.getOptionValue("sort_desc");
-            if (!sortBy.toLowerCase().trim().equals("date") && !sortBy.toLowerCase().trim().equals("amount"))
-            {
-                throw new IllegalArgumentException("Please, when listing expenses, you can only sort by the amount or by the date");
-            }
-            else if (sortBy.toLowerCase().equals("date"))
-            {
-                expenseList.sort((a, b) -> { return -1* a.compareDate(b); });
-                for(var x : expenseList)
-                {
-                    System.out.println(x.toString());
-                }
-            }
-            else
-            {
-                expenseList.sort((a, b) -> { return -1* a.compareAmount(b); });
-                for(var x : expenseList)
-                {
-                    System.out.println(x.toString());
-                }
-            }
-        }
+
 
       
     }
@@ -547,10 +598,16 @@ public class App {
     // save json to file
     public static void saveJson(String[] args)
     {
+        String filename = args[1];
+        if(!filename.endsWith(".json"))
+        {
+            filename += ".json";
+        }
+
         ObjectMapper mapper = new ObjectMapper();
         try
         {
-            mapper.writeValue(new File(args[1]), expenses);
+            mapper.writeValue(new File(filename), expenses);
         }
         catch(IOException e)
         {
@@ -576,7 +633,6 @@ public class App {
                 case "open":
                     loadJson(args);
                     runOptions(args);
-                    saveJson(args);
                     break;
                 default:                
                   System.out.println(improper_use);
