@@ -34,8 +34,8 @@ public class Expense
     @JsonCreator
     public Expense(@JsonProperty("id") int id, 
     @JsonProperty("value") double value,
-    @JsonProperty("desc") String desc, 
-    @JsonProperty("year") Date date,
+    @JsonProperty("description") String desc, 
+    @JsonProperty("date") Date date,
     @JsonProperty("category") String category) throws IllegalArgumentException
     {
         if(value <= 0)

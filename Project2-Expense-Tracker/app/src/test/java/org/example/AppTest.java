@@ -119,7 +119,8 @@ class AppTest {
         String[] args = {"filter","-category", "FOOD"};
         try
         {
-            App.updateExpense(args);
+            System.setOut(new PrintStream(outContent));
+            App.filterExpense(args);
             String output = outContent.toString();
             assertFalse(output.contains("TRANSPORT"));
             assertFalse(output.contains("ENTERTAINMENT"));
@@ -130,6 +131,7 @@ class AppTest {
         {
             System.out.println("ERROR: " + e.getMessage());
             e.printStackTrace();
+            System.setOut(originalOut);
         }
 
         System.setOut(originalOut);
@@ -150,7 +152,8 @@ class AppTest {
         String[] args = {"summary","-month", "2024-9"};
         try
         {
-            App.updateExpense(args);
+            System.setOut(new PrintStream(outContent));
+            App.summaryExpense(args);
             String output = outContent.toString();
             assertFalse(output.contains("Burger King"));
             assertFalse(output.contains("Gas Station"));
@@ -162,6 +165,7 @@ class AppTest {
         {
             System.out.println("ERROR: " + e.getMessage());
             e.printStackTrace();
+            System.setOut(originalOut);
         }
 
         System.setOut(originalOut);
